@@ -1,0 +1,41 @@
+{
+    "name": "FactorioHQ",
+    "slug": "factoriohq",
+    "categories": [
+        22
+    ],
+    "date_created": "2026-08-19",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "architectures": ["amd64"],
+    "interface_port": 3000,
+    "documentation": "https://github.com/behindcurtain3/factoriohq",
+    "website": "https://github.com/behindcurtain3/factoriohq",
+    "repository": "https://github.com/behindcurtain3/factoriohq",
+    "description": "FactorioHQ is a web application for managing Factorio game servers using Docker containers. It provides a user-friendly interface to create, configure, and manage multiple Factorio servers.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/factoriohq.sh",
+            "config_path": "/opt/factoriohq/.env",
+            "resources": {
+                "cpu": 4,
+                "ram": 4096,
+                "hdd": 32,
+                "os": "Debian",
+                "version": "13"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "Create the first account at http://IP:3000 after the services have started.",
+            "type": "info"
+        }
+    ]
+}
