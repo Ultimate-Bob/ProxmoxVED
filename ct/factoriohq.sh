@@ -57,6 +57,8 @@ function update_script() {
 
   RUBY_VERSION="$(tr -d ' \n' < .ruby-version)"
   RUBY_VERSION="${RUBY_VERSION#ruby-}"
+
+  export HOME=/opt/factoriohq
   RUBY_INSTALL_RAILS="false" setup_ruby
 
   export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"

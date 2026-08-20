@@ -64,6 +64,7 @@ fi
 RUBY_VERSION="$(tr -d ' \n' < .ruby-version)"
 RUBY_VERSION="${RUBY_VERSION#ruby-}"
 
+export HOME=/opt/factoriohq
 RUBY_INSTALL_RAILS="false" setup_ruby
 
 export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
@@ -106,6 +107,7 @@ msg_ok "Configured FactorioHQ"
 
 msg_info "Setting File Permissions"
 chown -R 845:845 /opt/factoriohq
+chown -R root:root /opt/factoriohq/.rbenv
 chmod 640 /opt/factoriohq/.env
 msg_ok "Set File Permissions"
 
@@ -119,17 +121,20 @@ msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/factoriohq.service
 [Unit]
 Description=FactorioHQ
-After=network.target
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
 Type=simple
-User=845
-Group=845
+User=factoriohq
+Group=factoriohq
+SupplementaryGroups=docker
 WorkingDirectory=/opt/factoriohq
 EnvironmentFile=/opt/factoriohq/.env
+Environment=HOME=/opt/factoriohq
 Environment=RAILS_ENV=production
-Environment=PATH=/root/.rbenv/shims:/root/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/root/.rbenv/shims/bundle exec rails server -b 0.0.0.0 -p 3000
+Environment=PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/factoriohq/.rbenv/shims/bundle exec rails server -b 0.0.0.0 -p 3000
 Restart=on-failure
 RestartSec=5
 
