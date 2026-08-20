@@ -51,7 +51,7 @@ usermod -aG docker factoriohq
 msg_ok "Created FactorioHQ User"
 
 msg_info "Downloading FactorioHQ"
-git clone https://github.com/behindcurtain3/factoriohq.git /opt/factoriohq
+$STD git clone https://github.com/behindcurtain3/factoriohq.git /opt/factoriohq
 msg_ok "Downloaded FactorioHQ"
 
 cd /opt/factoriohq
