@@ -68,7 +68,13 @@ function update_script() {
   # bundle config set --local deployment 'true'
   bundle install
 
-  RAILS_ENV=production bundle exec rails db:migrate
+  # RAILS_ENV=production bundle exec rails db:migrate
+  # does the same as above but as the factoriohq user
+  runuser -u factoriohq -- env \
+    HOME=/opt/factoriohq \
+    PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    RAILS_ENV=production \
+    bundle exec rails db:migrate
 
   restore_backup
 

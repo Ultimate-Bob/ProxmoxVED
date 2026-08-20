@@ -112,8 +112,14 @@ chmod 640 /opt/factoriohq/.env
 msg_ok "Set File Permissions"
 
 msg_info "Preparing Database"
-# $STD bundle exec rails db:create db:migrate
-$STD env RAILS_ENV=production bundle exec rails db:create db:migrate
+# $STD env RAILS_ENV=production bundle exec rails db:create db:migrate
+# does the same as above but as the factoriohq user
+runuser -u factoriohq -- env \
+  HOME=/opt/factoriohq \
+  PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  RAILS_ENV=production \
+  bundle exec rails db:create db:migrate
+
 msg_ok "Prepared Database"
 
 msg_info "Creating Service"
