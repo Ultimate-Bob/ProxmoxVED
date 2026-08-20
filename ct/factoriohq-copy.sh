@@ -7,7 +7,6 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/core/mai
 # Source: https://github.com/behindcurtain3/factoriohq
 
 APP="FactorioHQ"
-
 var_tags="${var_tags:-games;factorio;rails;docker}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
@@ -29,49 +28,32 @@ function update_script() {
 
   if [[ ! -f /opt/factoriohq/.env ]]; then
     msg_error "No ${APP} Installation Found!"
-    exit 1
+    exit
   fi
 
-  msg_info "Stopping Service"
+  msg_info "Stopping Services"
   systemctl stop factoriohq
-  msg_ok "Stopped Service"
+  msg_ok "Stopped Services"
 
-  create_backup /opt/factoriohq/.env /opt/factoriohq/factorio-data
+  create_backup /opt/factoriohq/.env /opt/factoriohq/storage
 
   msg_info "Updating Application"
   cd /opt/factoriohq
-
-  git fetch origin
-  git reset --hard origin/main
-
-  if [[ ! -f .ruby-version ]]; then
-    msg_error "No .ruby-version file found!"
-    restore_backup
-    systemctl start factoriohq
-    exit 1
-  fi
-
-  RUBY_VERSION="$(tr -d ' \n' < .ruby-version)"
-  RUBY_INSTALL_RAILS="false" setup_ruby
-
+  git pull
+  RUBY_VERSION=$(tr -d ' \n' < /opt/factoriohq/.ruby-version)
+  RUBY_VERSION="${RUBY_VERSION}" RUBY_INSTALL_RAILS="false" setup_ruby
   export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
-
   bundle config set --local without 'development test'
   bundle config set --local deployment 'true'
   bundle install
-
   RAILS_ENV=production bundle exec rails db:migrate
-
-  restore_backup
-  
-  chown -R 845:845 /opt/factoriohq
-
   msg_ok "Updated Application"
 
-  msg_info "Starting Service"
-  systemctl start factoriohq
-  msg_ok "Started Service"
+  restore_backup
 
+  msg_info "Starting Services"
+  systemctl start factoriohq
+  msg_ok "Started Services"
   msg_ok "Updated successfully!"
   exit
 }

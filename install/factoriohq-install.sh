@@ -6,6 +6,7 @@
 # Source: https://github.com/behindcurtain3/factoriohq
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+
 color
 verb_ip6
 catch_errors
@@ -22,44 +23,89 @@ $STD apt install -y \
   libyaml-dev \
   pkg-config \
   sqlite3 \
-  sqlite3 \
   zlib1g-dev
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_release "factoriohq" "behindcurtain3/factoriohq" "tarball"
+msg_info "Creating FactorioHQ User"
 
-RUBY_VERSION="3.2.4" RUBY_INSTALL_RAILS="false" setup_ruby
+if ! getent group 845 >/dev/null; then
+  groupadd --system --gid 845 factoriohq
+fi
+
+if ! getent passwd 845 >/dev/null; then
+  useradd \
+    --system \
+    --uid 845 \
+    --gid 845 \
+    --home-dir /opt/factoriohq \
+    --no-create-home \
+    --shell /usr/sbin/nologin \
+    factoriohq
+fi
+
+msg_ok "Created FactorioHQ User"
+
+msg_info "Downloading FactorioHQ"
+git clone https://github.com/behindcurtain3/factoriohq.git /opt/factoriohq
+msg_ok "Downloaded FactorioHQ"
+
+cd /opt/factoriohq
+
+if [[ ! -f .ruby-version ]]; then
+  msg_error "No .ruby-version file found in FactorioHQ source!"
+  exit 1
+fi
+
+RUBY_VERSION="$(tr -d ' \n' < .ruby-version)"
+
+msg_info "Installing Ruby ${RUBY_VERSION}"
+RUBY_VERSION="${RUBY_VERSION}" RUBY_INSTALL_RAILS="false" setup_ruby
+msg_ok "Installed Ruby ${RUBY_VERSION}"
+
 export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
 
 msg_info "Installing Application Dependencies"
-cd /opt/factoriohq
+
+bundle config set --local without 'development test'
+bundle config set --local deployment 'true'
 $STD bundle install
+
 msg_ok "Installed Application Dependencies"
 
 msg_info "Configuring FactorioHQ"
+
 cp .env.example .env
 
 FACTORIO_DATA_PATH="/opt/factoriohq/factorio-data"
 mkdir -p "$FACTORIO_DATA_PATH"
 
-if ! grep -q '^FACTORIO_DATA_PATH=' .env; then
-  echo "FACTORIO_DATA_PATH=${FACTORIO_DATA_PATH}" >> .env
-else
+if grep -q '^FACTORIO_DATA_PATH=' .env; then
   sed -i "s|^FACTORIO_DATA_PATH=.*|FACTORIO_DATA_PATH=${FACTORIO_DATA_PATH}|" .env
+else
+  echo "FACTORIO_DATA_PATH=${FACTORIO_DATA_PATH}" >> .env
 fi
 
-if ! grep -q '^RAILS_ENV=' .env; then
+if grep -q '^RAILS_ENV=' .env; then
+  sed -i 's|^RAILS_ENV=.*|RAILS_ENV=production|' .env
+else
   echo "RAILS_ENV=production" >> .env
 fi
 
 chmod 640 .env
+
 msg_ok "Configured FactorioHQ"
+
+msg_info "Setting File Permissions"
+chown -R 845:845 /opt/factoriohq
+chmod 640 /opt/factoriohq/.env
+msg_ok "Set File Permissions"
 
 msg_info "Preparing Database"
 $STD bundle exec rails db:create db:migrate
 msg_ok "Prepared Database"
 
 msg_info "Creating Service"
+
 cat <<EOF >/etc/systemd/system/factoriohq.service
 [Unit]
 Description=FactorioHQ
@@ -71,8 +117,9 @@ User=845
 Group=845
 WorkingDirectory=/opt/factoriohq
 EnvironmentFile=/opt/factoriohq/.env
-Environment=PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/opt/factoriohq/.rbenv/shims/bundle exec rails server
+Environment=RAILS_ENV=production
+Environment=PATH=/root/.rbenv/shims:/root/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/.rbenv/shims/bundle exec rails server -b 0.0.0.0 -p 3000
 Restart=on-failure
 RestartSec=5
 
@@ -82,6 +129,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable -q --now factoriohq
+
 msg_ok "Created Service"
 
 motd_ssh
