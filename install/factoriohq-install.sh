@@ -81,7 +81,7 @@ msg_ok "Installed Application Dependencies"
 
 msg_info "Applying Source Patches"
 
-# Disable the `force_ssl` line in the configuration since
+# Disable the `force_ssl` and `assume_ssl` lines in the configuration since TLS is handled by the reverse proxy.
 FORCE_SSL_CONFIG="config/environments/production.rb"
 if [[ ! -f "$FORCE_SSL_CONFIG" ]]; then
   msg_error "Rails production configuration not found: $FORCE_SSL_CONFIG"
@@ -92,8 +92,15 @@ if grep -qE '^[[:space:]]*config\.force_ssl[[:space:]]*=' "$FORCE_SSL_CONFIG"; t
     's/^[[:space:]]*config\.force_ssl[[:space:]]*=.*/  config.force_ssl = false/' \
     "$FORCE_SSL_CONFIG"
 else
-  printf '\n# PVE installation: TLS is handled by the reverse proxy.\nconfig.force_ssl = false\n' \
-    >> "$FORCE_SSL_CONFIG"
+  echo 'config.force_ssl = false' >> "$FORCE_SSL_CONFIG"
+fi
+
+if grep -qE '^[[:space:]]*config\.assume_ssl[[:space:]]*=' "$FORCE_SSL_CONFIG"; then
+  sed -i -E \
+    's/^[[:space:]]*config\.assume_ssl[[:space:]]*=.*/  config.assume_ssl = false/' \
+    "$FORCE_SSL_CONFIG"
+else
+  echo 'config.assume_ssl = false' >> "$FORCE_SSL_CONFIG"
 fi
 
 msg_ok "Applied Source Patches"
