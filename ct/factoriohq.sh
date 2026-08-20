@@ -8,10 +8,10 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/core/mai
 
 APP="FactorioHQ"
 
-var_tags="${var_tags:-games;factorio;rails;docker}"
+var_tags="${var_tags:-games}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
-var_disk="${var_disk:-16}"
+var_disk="${var_disk:-32}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
@@ -63,7 +63,7 @@ function update_script() {
   RAILS_ENV=production bundle exec rails db:migrate
 
   restore_backup
-  
+
   chown -R 845:845 /opt/factoriohq
 
   msg_ok "Updated Application"
