@@ -68,6 +68,19 @@ function update_script() {
   # bundle config set --local deployment 'true'
   bundle install
 
+
+  msg_info "Precompiling Assets"
+
+  runuser -u factoriohq -- env \
+    HOME=/opt/factoriohq \
+    PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    RAILS_ENV=production \
+    bundle exec rails assets:precompile
+
+  msg_ok "Precompiled Assets"
+
+  msg_info "Migrating Database"
+
   # RAILS_ENV=production bundle exec rails db:migrate
   # does the same as above but as the factoriohq user
   runuser -u factoriohq -- env \
@@ -75,6 +88,8 @@ function update_script() {
     PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     RAILS_ENV=production \
     bundle exec rails db:migrate
+
+  msg_ok "Migrated Database"
 
   restore_backup
 

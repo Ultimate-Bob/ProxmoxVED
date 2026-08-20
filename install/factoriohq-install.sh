@@ -78,6 +78,27 @@ $STD bundle install
 
 msg_ok "Installed Application Dependencies"
 
+
+msg_info "Applying Source Patches"
+
+# Disable the `force_ssl` line in the configuration since
+FORCE_SSL_CONFIG="config/environments/production.rb"
+if [[ ! -f "$FORCE_SSL_CONFIG" ]]; then
+  msg_error "Rails production configuration not found: $FORCE_SSL_CONFIG"
+  exit 1
+fi
+if grep -qE '^[[:space:]]*config\.force_ssl[[:space:]]*=' "$FORCE_SSL_CONFIG"; then
+  sed -i -E \
+    's/^[[:space:]]*config\.force_ssl[[:space:]]*=.*/  config.force_ssl = false/' \
+    "$FORCE_SSL_CONFIG"
+else
+  printf '\n# PVE installation: TLS is handled by the reverse proxy.\nconfig.force_ssl = false\n' \
+    >> "$FORCE_SSL_CONFIG"
+fi
+
+msg_ok "Applied Source Patches"
+
+
 msg_info "Configuring FactorioHQ"
 
 cp .env.example .env
@@ -111,6 +132,18 @@ chown -R root:root /opt/factoriohq/.rbenv
 chmod 640 /opt/factoriohq/.env
 msg_ok "Set File Permissions"
 
+
+msg_info "Precompiling Assets"
+
+$STD runuser -u factoriohq -- env \
+  HOME=/opt/factoriohq \
+  PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  RAILS_ENV=production \
+  bundle exec rails assets:precompile
+
+msg_ok "Precompiled Assets"
+
+
 msg_info "Preparing Database"
 # $STD env RAILS_ENV=production bundle exec rails db:create db:migrate
 # does the same as above but as the factoriohq user
@@ -139,6 +172,7 @@ WorkingDirectory=/opt/factoriohq
 EnvironmentFile=/opt/factoriohq/.env
 Environment=HOME=/opt/factoriohq
 Environment=RAILS_ENV=production
+Environment=SOLID_QUEUE_IN_PUMA=true
 Environment=PATH=/opt/factoriohq/.rbenv/shims:/opt/factoriohq/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/opt/factoriohq/.rbenv/shims/bundle exec rails server -b 0.0.0.0 -p 3000
 Restart=on-failure
