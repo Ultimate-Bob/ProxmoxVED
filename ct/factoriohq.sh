@@ -61,8 +61,9 @@ function update_script() {
 
   export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
 
-  bundle config set --local without 'development test'
-  bundle config set --local deployment 'true'
+  # This needs to be installed in debug mode, so just ignore the following bundle config lines
+  # bundle config set --local without 'development test'
+  # bundle config set --local deployment 'true'
   bundle install
 
   RAILS_ENV=production bundle exec rails db:migrate

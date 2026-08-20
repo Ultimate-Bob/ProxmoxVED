@@ -65,8 +65,9 @@ export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
 
 msg_info "Installing Application Dependencies"
 
-bundle config set --local without 'development test'
-bundle config set --local deployment 'true'
+# This needs to be installed in debug mode, so just ignore the following bundle config lines
+# bundle config set --local without 'development test'
+# bundle config set --local deployment 'true'
 $STD bundle install
 
 msg_ok "Installed Application Dependencies"
@@ -100,7 +101,8 @@ chmod 640 /opt/factoriohq/.env
 msg_ok "Set File Permissions"
 
 msg_info "Preparing Database"
-$STD bundle exec rails db:create db:migrate
+# $STD bundle exec rails db:create db:migrate
+$STD env RAILS_ENV=production bundle exec rails db:create db:migrate
 msg_ok "Prepared Database"
 
 msg_info "Creating Service"
