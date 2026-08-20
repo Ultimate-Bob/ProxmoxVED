@@ -21,10 +21,13 @@ $STD apt install -y \
   git \
   libssl-dev \
   libyaml-dev \
+  openssl \
   pkg-config \
   sqlite3 \
   zlib1g-dev
 msg_ok "Installed Dependencies"
+
+setup_docker
 
 msg_info "Creating FactorioHQ User"
 
@@ -42,6 +45,8 @@ if ! getent passwd 845 >/dev/null; then
     --shell /usr/sbin/nologin \
     factoriohq
 fi
+
+usermod -aG docker factoriohq
 
 msg_ok "Created FactorioHQ User"
 
@@ -89,6 +94,10 @@ if grep -q '^RAILS_ENV=' .env; then
   sed -i 's|^RAILS_ENV=.*|RAILS_ENV=production|' .env
 else
   echo "RAILS_ENV=production" >> .env
+fi
+
+if ! grep -q '^SECRET_KEY_BASE=' .env; then
+  echo "SECRET_KEY_BASE=$(openssl rand -hex 64)" >> .env
 fi
 
 chmod 640 .env
