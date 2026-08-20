@@ -56,6 +56,7 @@ function update_script() {
   fi
 
   RUBY_VERSION="$(tr -d ' \n' < .ruby-version)"
+  RUBY_VERSION="${RUBY_VERSION#ruby-}"
   RUBY_INSTALL_RAILS="false" setup_ruby
 
   export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
